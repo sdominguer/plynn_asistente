@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PLYNN · Asistente Plan I+D+i</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<style>
+:root {
+  --azul:#1A3365; --cyan:#0FBAE3; --rojo:#FF4343;
+  --amarillo:#FFBB00; --azul-m:#61809F;
+  --blanco:#FFFFFF; --gris-f:#F4F6FA;
+  --gris-b:#E2E8F0; --gris-t:#64748b; --negro:#0f172a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Montserrat',sans-serif;background:var(--gris-f);color:var(--negro);min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.header{background:var(--azul);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(26,51,101,0.3);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-text{font-size:19px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
+.logo-text span{color:var(--amarillo);}
+.logo-sub{font-size:10px;color:var(--cyan);font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.header-badge{background:rgba(15,186,227,0.15);border:1px solid var(--cyan);color:var(--cyan);font-size:11px;font-weight:700;padding:5px 14px;border-radius:50px;letter-spacing:0.5px;}
+
+/* INTRO */
+.intro{background:linear-gradient(135deg,var(--azul) 0%,#0d2247 55%,#0a1835 100%);padding:48px 24px 44px;position:relative;overflow:hidden;}
+.intro::before{content:'';position:absolute;top:-80px;right:-60px;width:420px;height:420px;background:radial-gradient(circle,rgba(15,186,227,0.13) 0%,transparent 65%);pointer-events:none;}
+.intro::after{content:'';position:absolute;bottom:-50px;left:-40px;width:280px;height:280px;background:radial-gradient(circle,rgba(255,187,0,0.10) 0%,transparent 65%);pointer-events:none;}
+.intro-inner{max-width:860px;margin:0 auto;}
+.intro-tag{display:inline-block;background:rgba(255,187,0,0.15);border:1px solid rgba(255,187,0,0.45);color:var(--amarillo);font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;padding:5px 16px;border-radius:50px;margin-bottom:18px;}
+.intro h1{font-size:clamp(20px,3.5vw,38px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px;letter-spacing:-0.5px;}
+.intro h1 em{color:var(--cyan);font-style:normal;}
+.intro-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;}
+@media(max-width:580px){.intro-cols{grid-template-columns:1fr;}}
+.intro-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.11);border-radius:12px;padding:18px 20px;}
+.intro-box-title{font-size:11px;font-weight:800;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.intro-box p{font-size:13px;color:rgba(255,255,255,0.72);line-height:1.65;}
+.intro-box ul{list-style:none;padding:0;}
+.intro-box ul li{font-size:13px;color:rgba(255,255,255,0.72);padding:4px 0 4px 18px;position:relative;line-height:1.5;}
+.intro-box ul li::before{content:'→';position:absolute;left:0;color:var(--amarillo);font-weight:700;}
+.btn-start{background:var(--amarillo);color:var(--azul);border:none;padding:14px 38px;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.25s;box-shadow:0 4px 20px rgba(255,187,0,0.35);margin-top:28px;}
+.btn-start:hover{background:#FFD000;transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,187,0,0.45);}
+
+/* CHAT */
+.chat-wrapper{flex:1;max-width:820px;width:100%;margin:0 auto;padding:28px 18px 140px;display:none;}
+.chat-wrapper.active{display:block;}
+
+/* Progress */
+.prog-wrap{background:var(--blanco);border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(26,51,101,0.07);}
+.prog-step-counter{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.prog-step-info{display:flex;align-items:center;gap:10px;}
+.prog-step-badge{background:var(--azul);color:#fff;font-size:12px;font-weight:800;padding:4px 14px;border-radius:50px;white-space:nowrap;}
+.prog-step-name{font-size:13px;font-weight:700;color:var(--azul);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;}
+.prog-step-remaining{font-size:11px;color:var(--gris-t);font-weight:600;white-space:nowrap;}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.prog-top span{font-size:12px;font-weight:600;color:var(--azul-m);}
+.prog-top strong{font-size:12px;color:var(--azul);}
+.prog-track{height:5px;background:var(--gris-b);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--azul));border-radius:3px;transition:width 0.6s ease;}
+.prog-phases{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.phase{font-size:11px;font-weight:700;padding:3px 10px;border-radius:50px;background:var(--gris-b);color:var(--gris-t);transition:all 0.3s;}
+.phase.done{background:rgba(15,186,227,0.2);color:#0a8aad;}
+.phase.active{background:var(--azul);color:#fff;}
+
+/* Messages */
+.messages{display:flex;flex-direction:column;gap:14px;}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:fadeUp 0.35s ease both;}
+.msg.user{flex-direction:row-reverse;}
+.avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+.msg.bot .avatar{background:linear-gradient(135deg,var(--cyan),var(--azul));color:#fff;}
+.msg.user .avatar{background:var(--amarillo);color:var(--azul);}
+.bubble{max-width:80%;padding:13px 17px;border-radius:16px;font-size:14px;line-height:1.7;}
+.msg.bot .bubble{background:var(--blanco);box-shadow:0 2px 10px rgba(26,51,101,0.08);border-bottom-left-radius:4px;color:var(--negro);}
+.msg.user .bubble{background:var(--azul);color:#fff;border-bottom-right-radius:4px;}
+.bubble strong{font-weight:800;}
+.bubble em{color:var(--cyan);font-style:normal;font-weight:700;}
+.bubble .tag{display:inline-block;background:rgba(15,186,227,0.12);border:1px solid rgba(15,186,227,0.3);color:#0a8aad;font-size:11px;font-weight:800;padding:2px 10px;border-radius:50px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.bubble .warn-box{background:rgba(255,67,67,0.08);border-left:3px solid var(--rojo);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#c0392b;font-weight:600;margin:10px 0;}
+.bubble .tip-box{background:rgba(255,187,0,0.08);border-left:3px solid var(--amarillo);padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#8a6500;margin:10px 0;line-height:1.6;}
+.bubble ul{padding-left:18px;margin-top:6px;}
+.bubble ul li{margin-bottom:5px;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.chip{background:var(--gris-f);border:1.5px solid var(--gris-b);color:var(--azul);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:50px;cursor:pointer;transition:all 0.2s;}
+.chip:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(15,186,227,0.06);}
+.chip.on{background:var(--azul);color:#fff;border-color:var(--azul);}
+
+/* Typing */
+.typing-dots{display:flex;gap:5px;align-items:center;padding:13px 17px;}
+.typing-dots span{width:7px;height:7px;background:var(--cyan);border-radius:50%;animation:bounce 1.2s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+
+/* PLAN OUTPUT */
+.plan-wrap{background:var(--blanco);border-radius:16px;overflow:hidden;box-shadow:0 6px 32px rgba(26,51,101,0.14);margin-top:6px;}
+.plan-cover{background:linear-gradient(135deg,var(--azul) 0%,#0d2247 100%);padding:32px 36px;color:#fff;position:relative;overflow:hidden;}
+.plan-cover::after{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(15,186,227,0.18) 0%,transparent 70%);pointer-events:none;}
+.plan-cover .eyebrow{font-size:10px;font-weight:800;color:var(--cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
+.plan-cover h2{font-size:clamp(18px,3vw,26px);font-weight:900;letter-spacing:-0.3px;margin-bottom:6px;}
+.plan-cover .meta{font-size:13px;color:rgba(255,255,255,0.6);}
+.plan-cover .exec{margin-top:16px;background:rgba(255,255,255,0.09);border-radius:10px;padding:14px 18px;font-size:13px;color:rgba(255,255,255,0.82);line-height:1.7;border-left:3px solid var(--cyan);}
+
+.plan-sec{padding:24px 36px;border-bottom:1px solid var(--gris-b);}
+.plan-sec:last-of-type{border-bottom:none;}
+.plan-sec-title{font-size:11px;font-weight:800;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.plan-sec-title::after{content:'';flex:1;height:1px;background:var(--gris-b);}
+
+.plan-block{margin-bottom:18px;}
+.plan-label{font-size:11px;font-weight:800;color:var(--azul-m);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.plan-val{font-size:14px;color:var(--negro);line-height:1.75;}
+.plan-val ul{padding-left:18px;}
+.plan-val ul li{margin-bottom:6px;}
+
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.ptag{display:inline-block;background:var(--gris-f);border:1.5px solid var(--gris-b);color:var(--azul);font-size:12px;font-weight:600;padding:4px 13px;border-radius:50px;}
+.ptag.c{background:rgba(15,186,227,0.10);border-color:rgba(15,186,227,0.3);color:#0a8aad;}
+.ptag.a{background:rgba(255,187,0,0.10);border-color:rgba(255,187,0,0.4);color:#8a6500;}
+.ptag.r{background:rgba(255,67,67,0.08);border-color:rgba(255,67,67,0.25);color:#c0392b;}
+
+/* Tabla cronograma */
+.plan-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+.plan-table th{background:var(--azul);color:#fff;padding:9px 12px;text-align:left;font-weight:700;font-size:11px;letter-spacing:0.5px;}
+.plan-table td{padding:9px 12px;border-bottom:1px solid var(--gris-b);vertical-align:top;line-height:1.5;}
+.plan-table tr:last-child td{border-bottom:none;}
+.plan-table tr:nth-child(even) td{background:var(--gris-f);}
+
+.pi-warn{background:rgba(255,67,67,0.07);border:1.5px solid rgba(255,67,67,0.2);border-radius:10px;padding:14px 18px;font-size:13px;color:#c0392b;font-weight:600;margin-bottom:18px;line-height:1.6;}
+
+.recom-item{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.recom-num{width:28px;height:28px;background:var(--azul);color:#fff;border-radius:50%;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.recom-text{font-size:14px;color:var(--negro);line-height:1.65;padding-top:3px;}
+
+.plan-actions{padding:20px 36px;background:var(--gris-f);display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.btn-pdf{background:var(--amarillo);color:var(--azul);border:none;padding:12px 26px;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all 0.2s;}
+.btn-pdf:hover{background:#FFD000;transform:translateY(-1px);}
+.btn-new{background:transparent;color:var(--azul-m);border:1.5px solid var(--gris-b);padding:12px 22px;border-radius:50px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-new:hover{border-color:var(--azul);color:var(--azul);}
+
+/* INPUT */
+.input-dock{position:fixed;bottom:0;left:0;right:0;background:rgba(244,246,250,0.96);backdrop-filter:blur(14px);border-top:1px solid var(--gris-b);padding:12px 18px;display:none;z-index:50;}
+.input-dock.active{display:block;}
+.input-row{max-width:820px;margin:0 auto;display:flex;gap:9px;align-items:flex-end;}
+.input-box{flex:1;background:var(--blanco);border:1.5px solid var(--gris-b);border-radius:14px;padding:11px 15px;font-family:'Montserrat',sans-serif;font-size:14px;color:var(--negro);resize:none;outline:none;transition:border-color 0.2s;min-height:46px;max-height:130px;line-height:1.5;}
+.input-box:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(15,186,227,0.10);}
+.input-box::placeholder{color:#94a3b8;}
+.btn-send{width:46px;height:46px;background:var(--azul);color:#fff;border:none;border-radius:12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.btn-send:hover{background:var(--cyan);}
+.btn-send:disabled{opacity:0.35;cursor:not-allowed;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes bounce{0%,80%,100%{transform:scale(0);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px;}
+
+@media(max-width:560px){
+  .plan-cover,.plan-sec,.plan-actions{padding-left:18px;padding-right:18px;}
+  .plan-table{font-size:12px;}
+}
+
+@media print {
+  .header,.intro,.prog-wrap,.input-dock,.plan-actions,.chips,.btn-start{display:none!important;}
+  .chat-wrapper{padding:0!important;max-width:100%!important;}
+  .plan-wrap{box-shadow:none!important;border:1px solid #ccc;}
+  .bubble:not(:last-child){display:none;}
+  body{background:#fff;}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <svg width="30" height="30" viewBox="0 0 36 36" fill="none">
+      <rect x="5" y="10" width="10" height="22" rx="5" fill="#0FBAE3"/>
+      <rect x="16" y="4" width="10" height="28" rx="5" fill="#FFBB00"/>
+      <circle cx="21" cy="3" r="4" fill="#FFBB00"/>
+    </svg>
+    <div>
+      <div class="logo-text">pl<span>y</span>nn</div>
+      <div class="logo-sub">Asistente I+D+i · IA</div>
+    </div>
+  </div>
+  <div class="header-badge">Plan Difusión &amp; Explotación</div>
+</header>
+
+<!-- INTRO -->
+<section class="intro" id="intro">
+  <div class="intro-inner">
+    <div class="intro-tag">Asistente con Inteligencia Artificial</div>
+    <h1>Crea tu <em>Plan de Difusión<br/>y Explotación</em> de I+D+i</h1>
+    <div class="intro-cols">
+      <div class="intro-box">
+        <div class="intro-box-title">¿Qué es este plan?</div>
+        <p>Es el instrumento que permite a tu empresa <strong style="color:#fff">recuperar el capital invertido</strong> en proyectos de I+D+i y <strong style="color:#fff">generar rentabilidad</strong> sobre esa inversión — la diferencia entre una <em style="color:var(--amarillo)">innovación rentable</em> y una idea que se queda en el cajón.</p>
+        <p style="margin-top:10px;">Combina el <strong style="color:#fff">Plan de Difusión</strong> (cómo comunicar la innovación) y el <strong style="color:#fff">Plan de Explotación</strong> (cómo comercializarla).</p>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-title">Beneficios para tu empresa</div>
+        <ul>
+          <li>Mayor impacto y rentabilidad de tus innovaciones</li>
+          <li>Fortalece reputación, marca y visibilidad sectorial</li>
+          <li>Documentación lista para convocatorias e inversionistas</li>
+          <li>Tu equipo sabe qué se logró y cómo aprovecharlo</li>
+          <li>El asistente te guía y responde tus dudas en el camino</li>
+        </ul>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startChat()">🚀 Comenzar ahora</button>
+    <p style="color:rgba(255,255,255,0.38);font-size:11px;margin-top:12px;">Chat guiado con IA · Cuanto más detallado respondas, mejor será tu plan</p>
+  </div>
+</section>
+
+<!-- CHAT -->
+<div class="chat-wrapper" id="chat-wrapper">
+  <div class="prog-wrap">
+    <div class="prog-step-counter">
+      <div class="prog-step-info">
+        <span class="prog-step-badge" id="prog-step-badge">Iniciando</span>
+        <span class="prog-step-name" id="prog-label">Comenzando...</span>
+      </div>
+      <span class="prog-step-remaining" id="prog-step-remaining"></span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-phases" id="prog-phases"></div>
+  </div>
+  <div class="messages" id="messages"></div>
+</div>
+
+<!-- INPUT -->
+<div class="input-dock" id="input-dock">
+  <div class="input-row">
+    <textarea class="input-box" id="input" placeholder="Escribe aquí tu respuesta o pregunta..." rows="1"
+      onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+    <button class="btn-send" id="btn-send" onclick="send()">&#9658;</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// PLYNN · ASISTENTE INTELIGENTE PLAN DIFUSIÓN Y EXPLOTACIÓN I+D+i
+// Claude API · Chat real · Plan de máxima calidad
+// ================================================================
+
+const MODEL = "claude-sonnet-4-20250514";
+const API   = "https://api.anthropic.com/v1/messages";
+
+const PHASES = ['Empresa & Proyecto','Propiedad Intelectual','Plan de Difusión','Plan de Explotación','Generando plan'];
+
+// SYSTEM PROMPT
+const SYSTEM = `Eres el Asistente de Innovación de PLYNN, experto en metodología I+D+i para PYMEs latinoamericanas. Tu misión es ayudar a las empresas a construir su Plan de Difusión y Explotación de Resultados de I+D+i.
+
+REGLAS DE COMPORTAMIENTO:
+1. SOLO responde preguntas relacionadas con: I+D+i, plan de difusión, plan de explotación, propiedad intelectual, innovación empresarial, comercialización de innovaciones, y el proceso de recopilación de información para construir el plan. Si el usuario pregunta algo fuera de estos temas, responde amablemente que solo puedes ayudar con el Plan de Difusión y Explotación de I+D+i.
+
+2. GUÍA CONVERSACIONAL: Tienes una misión estructurada. Debes recopilar esta información en orden:
+FASE 1 - Empresa & Proyecto: nombre empresa, nombre proyecto, descripción del resultado de la innovación, sector económico.
+FASE 2 - Propiedad Intelectual: si van a proteger la innovación, qué tipo, estado actual. ALERTA CRÍTICA: recordar que NO se puede difundir si hay intención de patentar antes de iniciar el trámite.
+FASE 3 - Plan de Difusión: si lo necesitan, cuál es el reto que soluciona la innovación (solo esto), luego el impacto social/ambiental (solo esto), luego la diferencia vs competencia (solo esto), luego público objetivo, luego canales, luego indicadores de medición, luego presupuesto.
+FASE 4 - Plan de Explotación: si lo necesitan, forma de explotación elegida, si tienen plan de negocios, mercado objetivo y cobertura, ventaja competitiva, riesgos identificados.
+
+3. UNA PREGUNTA A LA VEZ: Nunca hagas más de una pregunta por mensaje. Cada pregunta debe ser clara y simple.
+
+4. INCENTIVA DETALLE: Cuando una respuesta es muy corta o vaga, pide amablemente que amplíe. Ejemplo: "Gracias, ¿podrías darme un poco más de detalle sobre...? Cuanta más información nos compartas, más completo y útil será tu plan."
+
+5. CUANDO YA TENGAS TODA LA INFORMACIÓN (todas las fases completadas), di exactamente: "INFORMACIÓN_COMPLETA" como primera palabra de tu mensaje, seguido de un resumen de confirmación de los datos recopilados, y pregunta si hay algo más que agregar antes de generar el plan.
+
+6. CUANDO EL USUARIO CONFIRME QUE ESTÁ LISTO PARA GENERAR EL PLAN, responde exactamente: "GENERAR_PLAN" como primera palabra.
+
+7. CONTEXTO PLYNN: La metodología PLYNN diferencia entre:
+- Plan de Difusión = Plan de comunicación (cómo dar a conocer la innovación: eventos, redes, prensa, congresos, etc.)
+- Plan de Explotación = Plan de comercialización. Puede ser: Explotación directa (innovación cerrada), Acuerdos con terceros (licencia=revocable / cesión=irrevocable), Spin-off o Startup, Intraemprendimiento.
+- Propiedad Intelectual: Patente, Derechos de autor, Secreto industrial, Modelo de utilidad. IMPORTANTE: No difundir nada si se va a patentar y aún no se ha iniciado el trámite.
+
+8. TONO: Cercano, profesional, motivador. Usa frases como "¡Excelente!" o "Muy bien, esta información es clave..." para motivar respuestas detalladas.
+
+9. PROGRESO: En cada mensaje tuyo, incluye al inicio entre corchetes el número de fase actual: [FASE:1], [FASE:2], [FASE:3], [FASE:4], o [FASE:5] cuando ya estés generando. Esto es solo para el sistema, no lo expliques al usuario.`;
+
+// PROMPT PARA GENERAR EL PLAN
+function buildPlanPrompt(history) {
+  return `Basándote en toda la conversación anterior donde recopilaste información de la empresa, genera un Plan de Difusión y Explotación de Resultados de I+D+i COMPLETO, DETALLADO Y PROFESIONAL.
+
+El plan debe estar en formato JSON estrictamente válido (sin markdown, sin bloques de código), con esta estructura:
+
+{
+  "empresa": "nombre",
+  "proyecto": "nombre del proyecto",
+  "fecha": "fecha en español mes año",
+  "sector": "sector económico",
+  "resumen_ejecutivo": "Párrafo completo de 4-5 oraciones describiendo empresa, proyecto, innovación alcanzada y propósito del plan",
+  "pi": {
+    "proteccion": "descripción completa del mecanismo de protección elegido o N/A",
+    "tipo_detalle": "explicación del tipo de PI y sus implicaciones",
+    "estado": "estado actual del proceso de protección",
+    "advertencia": "advertencia sobre no difundir antes de iniciar trámite si aplica, o null",
+    "recomendacion": "recomendación detallada de 2-3 oraciones sobre gestión de PI"
+  },
+  "plan_difusion": {
+    "aplica": true,
+    "justificacion": "por qué es necesaria la difusión para este proyecto",
+    "reto_que_soluciona": "descripción detallada del reto o problema que soluciona la innovación",
+    "impacto": "descripción del impacto social, ambiental o económico de la innovación",
+    "diferenciacion": "cómo se diferencia de soluciones existentes o de la competencia",
+    "mensaje_clave": "el mensaje central de comunicación en 2-3 oraciones potentes",
+    "publico_objetivo": [
+      {"segmento": "nombre del segmento", "descripcion": "características y por qué les interesa"}
+    ],
+    "canales": [
+      {"canal": "nombre del canal", "acciones": ["acción específica 1", "acción específica 2"], "frecuencia": "frecuencia recomendada", "costo_estimado": "bajo/medio/alto"}
+    ],
+    "cronograma": [
+      {"fase": "Fase 1 — Lanzamiento", "meses": "Mes 1-2", "actividades": ["actividad 1", "actividad 2"], "responsable": "área responsable"},
+      {"fase": "Fase 2 — Consolidación", "meses": "Mes 3-6", "actividades": ["actividad 1", "actividad 2"], "responsable": "área responsable"},
+      {"fase": "Fase 3 — Expansión", "meses": "Mes 7-12", "actividades": ["actividad 1", "actividad 2"], "responsable": "área responsable"}
+    ],
+    "indicadores": [
+      {"indicador": "nombre KPI", "meta": "meta específica", "como_medir": "método de medición"}
+    ],
+    "presupuesto": "descripción detallada del presupuesto y distribución por canales",
+    "advertencia_pi": "recordatorio sobre PI si aplica o null"
+  },
+  "plan_explotacion": {
+    "aplica": true,
+    "forma_elegida": "nombre de la forma de explotación",
+    "descripcion_forma": "explicación detallada de esta forma de explotación y por qué es la más adecuada para este caso",
+    "mercado": {
+      "descripcion": "descripción detallada del mercado objetivo",
+      "tamanio_estimado": "estimación del tamaño del mercado",
+      "cobertura": "cobertura geográfica",
+      "segmentos_clave": ["segmento 1", "segmento 2"]
+    },
+    "ventaja_competitiva": "descripción detallada de las ventajas competitivas de la innovación",
+    "modelo_ingresos": "cómo generará ingresos esta innovación (precio, modelo de cobro, proyección básica)",
+    "pasos_implementacion": [
+      {"paso": 1, "accion": "acción específica", "plazo": "plazo recomendado", "recursos": "recursos necesarios"}
+    ],
+    "riesgos": [
+      {"riesgo": "descripción del riesgo", "probabilidad": "alta/media/baja", "mitigacion": "estrategia de mitigación"}
+    ],
+    "alianzas_recomendadas": ["alianza o actor clave 1", "alianza o actor clave 2"]
+  },
+  "recomendaciones": [
+    {"numero": 1, "titulo": "título corto", "descripcion": "recomendación detallada y accionable de 2-3 oraciones"},
+    {"numero": 2, "titulo": "título corto", "descripcion": "recomendación detallada y accionable"},
+    {"numero": 3, "titulo": "título corto", "descripcion": "recomendación detallada y accionable"},
+    {"numero": 4, "titulo": "título corto", "descripcion": "recomendación detallada y accionable"},
+    {"numero": 5, "titulo": "título corto", "descripcion": "recomendación detallada y accionable"}
+  ],
+  "proximos_pasos_inmediatos": ["acción concreta que pueden hacer esta semana 1", "acción concreta 2", "acción concreta 3"]
+}`;
+}
+
+// ---- STATE ----
+let history   = [];
+let phase     = 1;
+let generating = false;
+let planReady  = false;
+let lastPlanData = null;
+
+const PHASE_QUESTIONS = {
+  1: {total: 4, label: 'Empresa & Proyecto'},
+  2: {total: 2, label: 'Propiedad Intelectual'},
+  3: {total: 6, label: 'Plan de Difusión'},
+  4: {total: 4, label: 'Plan de Explotación'},
+  5: {total: 0, label: 'Generando plan...'}
+};
+let totalQuestions = 0;
+const TOTAL_QUESTIONS = 16;
+
+// ---- INIT ----
+function startChat() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('chat-wrapper').classList.add('active');
+  document.getElementById('input-dock').classList.add('active');
+  renderPhases();
+  firstMessage();
+}
+
+function renderPhases() {
+  document.getElementById('prog-phases').innerHTML =
+    PHASES.slice(0,4).map((p,i) =>
+      `<span class="phase" id="ph-${i}">${i+1}. ${p}</span>`
+    ).join('');
+}
+
+function setPhase(n) {
+  phase = n;
+  const phaseInfo = PHASE_QUESTIONS[n] || {label:'Generando...',total:0};
+  document.getElementById('prog-label').textContent = phaseInfo.label;
+  document.getElementById('prog-step-badge').textContent = n < 5 ? 'Fase ' + n + ' de 4' : '¡Generando!';
+  document.querySelectorAll('.phase').forEach((el,i) => {
+    el.className = 'phase' + (i < n-1 ? ' done' : i === n-1 ? ' active' : '');
+  });
+}
+
+function updateStepCounter(qNum) {
+  totalQuestions = qNum;
+  const remaining = Math.max(0, TOTAL_QUESTIONS - qNum);
+  const el = document.getElementById('prog-step-remaining');
+  if (el) el.textContent = remaining > 0 ? 'Aprox. ' + remaining + ' preguntas restantes' : '¡Casi listo!';
+  const pct = Math.min(95, Math.round((qNum / TOTAL_QUESTIONS) * 95));
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+async function firstMessage() {
+  const opening = `Hola 👋 Soy el asistente de PLYNN y estoy aquí para ayudarte a construir tu <strong>Plan de Difusión y Explotación de Resultados de I+D+i</strong> paso a paso.
+
+<div class="tip-box">💡 <strong>Consejo:</strong> Cuanta más información y detalle me compartas en cada respuesta, más completo, útil y profesional será el plan que generemos juntos. ¡No tengas miedo de explayarte!</div>
+
+También puedes preguntarme cualquier duda sobre el plan de difusión, explotación o propiedad intelectual mientras avanzamos.
+
+Para empezar: <strong>¿Cuál es el nombre de tu empresa?</strong>`;
+
+  showBot(opening);
+  history.push({role:'assistant', content: '[FASE:1] ' + opening.replace(/<[^>]*>/g,'')});
+  setPhase(1);
+}
+
+// ---- SEND ----
+function onKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+}
+
+async function send() {
+  if (generating) return;
+  const inp  = document.getElementById('input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  lockInput();
+  showUser(text);
+  history.push({role:'user', content: text});
+  totalQuestions++;
+  updateStepCounter(totalQuestions);
+  await callClaude();
+}
+
+async function callClaude() {
+  generating = true;
+  showTyping();
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const raw  = data.content?.find(b => b.type === 'text')?.text || '';
+    removeTyping();
+
+    const faseMatch = raw.match(/\[FASE:(\d)\]/);
+    if (faseMatch) setPhase(parseInt(faseMatch[1]));
+    const clean = raw.replace(/\[FASE:\d\]\s*/, '');
+
+    if (clean.startsWith('INFORMACIÓN_COMPLETA')) {
+      const msg = clean.replace('INFORMACIÓN_COMPLETA', '').trim();
+      showBot(formatMsg(msg), [
+        {label: '✅ Sí, generar mi plan ahora', action: 'confirmGenerate'},
+        {label: '✏️ Quiero agregar algo más',   action: null}
+      ]);
+      history.push({role:'assistant', content: raw});
+      setPhase(5);
+    } else if (clean.startsWith('GENERAR_PLAN')) {
+      history.push({role:'assistant', content: raw});
+      await generatePlan();
+    } else {
+      showBot(formatMsg(clean));
+      history.push({role:'assistant', content: raw});
+    }
+
+  } catch(err) {
+    removeTyping();
+    showBot('Hubo un problema de conexión. Por favor intenta de nuevo.');
+    console.error(err);
+  }
+
+  generating = false;
+  unlockInput();
+}
+
+function confirmGenerate() {
+  showUser('Sí, estoy listo. ¡Genera mi plan!');
+  history.push({role:'user', content:'Sí, ya tengo toda la información. Por favor genera el plan completo.'});
+  history.push({role:'assistant', content:'GENERAR_PLAN Perfecto, generando tu plan ahora...'});
+  lockInput();
+  showBot('⏳ <strong>Generando tu Plan de Difusión y Explotación...</strong> Dame un momento, estoy creando un informe detallado con toda la información que compartiste. 🎯');
+  setTimeout(() => generatePlan(), 800);
+}
+
+// ---- GENERAR PLAN ----
+async function generatePlan() {
+  generating = true;
+  setPhase(5);
+  document.getElementById('prog-label').textContent = 'Generando plan completo...';
+  document.getElementById('prog-fill').style.width = '95%';
+
+  const planMessages = [
+    ...history,
+    {role:'user', content: buildPlanPrompt(history)}
+  ];
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1000,
+        system: 'Eres un experto en I+D+i para PYMEs. Genera ÚNICAMENTE JSON válido, sin texto adicional, sin bloques markdown. El JSON debe ser completo y detallado.',
+        messages: planMessages
+      })
+    });
+    const data  = await res.json();
+    const raw   = data.content?.find(b => b.type === 'text')?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+
+    let plan;
+    try { plan = JSON.parse(clean); }
+    catch(e) { plan = null; }
+
+    document.getElementById('prog-fill').style.width = '100%';
+
+    if (plan) renderPlan(plan);
+    else      renderFallback(clean);
+
+  } catch(err) {
+    console.error(err);
+    renderFallback('');
+  }
+
+  generating = false;
+  document.getElementById('input-dock').classList.remove('active');
+  planReady = true;
+}
+
+// ---- RENDER PLAN ----
+function renderPlan(p) {
+  lastPlanData = p;
+  const msgs = document.getElementById('messages');
+
+  const intro = document.createElement('div');
+  intro.className = 'msg bot';
+  intro.innerHTML = `<div class="avatar">✦</div><div class="bubble">🎉 <strong>¡Tu plan está listo!</strong> He generado un plan detallado con toda la información que compartiste. Entre más detalle nos diste, más completo es el resultado. <em>Revísalo y descárgalo como PDF o Word.</em></div>`;
+  msgs.appendChild(intro);
+
+  const wrap    = document.createElement('div');
+  const difusion = p.plan_difusion;
+  const explot   = p.plan_explotacion;
+
+  const canalesHTML = (difusion?.canales || []).map(c => `
+    <tr>
+      <td><strong>${c.canal}</strong></td>
+      <td>${(c.acciones || []).map(a => '• ' + a).join('<br/>')}</td>
+      <td>${c.frecuencia || '—'}</td>
+      <td><span class="ptag ${c.costo_estimado==='bajo'?'c':c.costo_estimado==='alto'?'r':'a'}">${c.costo_estimado || '—'}</span></td>
+    </tr>`).join('');
+
+  const cronoHTML = (difusion?.cronograma || []).map(c => `
+    <tr>
+      <td><strong>${c.fase}</strong></td>
+      <td>${c.meses}</td>
+      <td>${(c.actividades || []).map(a => '• ' + a).join('<br/>')}</td>
+      <td>${c.responsable || '—'}</td>
+    </tr>`).join('');
+
+  const indicHTML = (difusion?.indicadores || []).map(i => `
+    <tr>
+      <td><strong>${i.indicador}</strong></td>
+      <td>${i.meta}</td>
+      <td>${i.como_medir}</td>
+    </tr>`).join('');
+
+  const pasosHTML = (explot?.pasos_implementacion || []).map(s => `
+    <tr>
+      <td style="text-align:center;font-weight:800;color:var(--azul);">${s.paso}</td>
+      <td><strong>${s.accion}</strong></td>
+      <td>${s.plazo}</td>
+      <td>${s.recursos}</td>
+    </tr>`).join('');
+
+  const riesgosHTML = (explot?.riesgos || []).map(r => `
+    <tr>
+      <td>${r.riesgo}</td>
+      <td><span class="ptag ${r.probabilidad==='alta'?'r':r.probabilidad==='baja'?'c':'a'}">${r.probabilidad}</span></td>
+      <td>${r.mitigacion}</td>
+    </tr>`).join('');
+
+  wrap.innerHTML = `
+    <div class="plan-wrap">
+      <div class="plan-cover">
+        <div class="eyebrow">Plan de Difusión y Explotación · I+D+i · Metodología PLYNN</div>
+        <h2>${p.empresa || ''} · ${p.proyecto || ''}</h2>
+        <div class="meta">${p.sector || ''} &nbsp;·&nbsp; ${p.fecha || ''}</div>
+        <div class="exec">${p.resumen_ejecutivo || ''}</div>
+      </div>
+
+      <!-- PI -->
+      <div class="plan-sec">
+        <div class="plan-sec-title">🔒 Propiedad Intelectual</div>
+        ${p.pi?.advertencia ? `<div class="pi-warn">⚠️ ${p.pi.advertencia}</div>` : ''}
+        <div class="plan-block"><div class="plan-label">Tipo de protección</div><div class="plan-val">${p.pi?.proteccion || '—'}</div></div>
+        <div class="plan-block"><div class="plan-label">Detalle y alcance</div><div class="plan-val">${p.pi?.tipo_detalle || '—'}</div></div>
+        <div class="plan-block"><div class="plan-label">Estado actual</div><div class="plan-val">${p.pi?.estado || '—'}</div></div>
+        <div class="plan-block"><div class="plan-label">💡 Recomendación</div><div class="plan-val" style="color:var(--azul);font-weight:600;">${p.pi?.recomendacion || '—'}</div></div>
+      </div>
+
+      ${difusion?.aplica ? `
+      <!-- DIFUSIÓN -->
+      <div class="plan-sec">
+        <div class="plan-sec-title">📢 Plan de Difusión</div>
+        ${difusion.advertencia_pi ? `<div class="pi-warn">⚠️ ${difusion.advertencia_pi}</div>` : ''}
+        <div class="plan-block"><div class="plan-label">Justificación</div><div class="plan-val">${difusion.justificacion || ''}</div></div>
+        <div class="plan-block"><div class="plan-label">Reto que soluciona</div><div class="plan-val">${difusion.reto_que_soluciona || ''}</div></div>
+        <div class="plan-block"><div class="plan-label">Impacto esperado</div><div class="plan-val">${difusion.impacto || ''}</div></div>
+        <div class="plan-block"><div class="plan-label">Diferenciación vs competencia</div><div class="plan-val">${difusion.diferenciacion || ''}</div></div>
+        <div class="plan-block"><div class="plan-label">🎯 Mensaje clave</div><div class="plan-val" style="font-weight:700;color:var(--azul);font-size:15px;">"${difusion.mensaje_clave || ''}"</div></div>
+        <div class="plan-block">
+          <div class="plan-label">Públicos objetivo</div>
+          ${(difusion.publico_objetivo || []).map(pub => `
+            <div style="background:var(--gris-f);border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+              <strong style="color:var(--azul);">${pub.segmento}</strong>
+              <div style="font-size:13px;color:var(--gris-t);margin-top:4px;">${pub.descripcion}</div>
+            </div>`).join('')}
+        </div>
+        ${canalesHTML ? `
+        <div class="plan-block">
+          <div class="plan-label">Canales y acciones</div>
+          <table class="plan-table">
+            <thead><tr><th>Canal</th><th>Acciones concretas</th><th>Frecuencia</th><th>Costo</th></tr></thead>
+            <tbody>${canalesHTML}</tbody>
+          </table>
+        </div>` : ''}
+        ${cronoHTML ? `
+        <div class="plan-block">
+          <div class="plan-label">Cronograma de difusión</div>
+          <table class="plan-table">
+            <thead><tr><th>Fase</th><th>Período</th><th>Actividades</th><th>Responsable</th></tr></thead>
+            <tbody>${cronoHTML}</tbody>
+          </table>
+        </div>` : ''}
+        ${indicHTML ? `
+        <div class="plan-block">
+          <div class="plan-label">Indicadores de éxito (KPIs)</div>
+          <table class="plan-table">
+            <thead><tr><th>Indicador</th><th>Meta</th><th>Cómo medir</th></tr></thead>
+            <tbody>${indicHTML}</tbody>
+          </table>
+        </div>` : ''}
+        <div class="plan-block"><div class="plan-label">💰 Presupuesto</div><div class="plan-val">${difusion.presupuesto || '—'}</div></div>
+      </div>` : ''}
+
+      ${explot?.aplica ? `
+      <!-- EXPLOTACIÓN -->
+      <div class="plan-sec">
+        <div class="plan-sec-title">💰 Plan de Explotación</div>
+        <div class="plan-block">
+          <div class="plan-label">Forma de explotación elegida</div>
+          <div class="plan-val"><span class="ptag a" style="font-size:14px;padding:6px 18px;">🚀 ${explot.forma_elegida || ''}</span></div>
+        </div>
+        <div class="plan-block"><div class="plan-label">¿Por qué esta forma?</div><div class="plan-val">${explot.descripcion_forma || ''}</div></div>
+        <div class="plan-block">
+          <div class="plan-label">Mercado objetivo</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;">
+            <div style="background:var(--gris-f);border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:var(--azul-m);margin-bottom:4px;">DESCRIPCIÓN</div>
+              <div style="font-size:13px;">${explot.mercado?.descripcion || ''}</div>
+            </div>
+            <div style="background:var(--gris-f);border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:var(--azul-m);margin-bottom:4px;">COBERTURA</div>
+              <div style="font-size:13px;">${explot.mercado?.cobertura || ''}</div>
+            </div>
+          </div>
+          ${(explot.mercado?.segmentos_clave || []).length ? `
+          <div style="margin-top:8px;">
+            <div class="plan-label" style="margin-bottom:6px;">Segmentos clave</div>
+            <div class="tag-list">${(explot.mercado.segmentos_clave || []).map(s => `<span class="ptag c">${s}</span>`).join('')}</div>
+          </div>` : ''}
+        </div>
+        <div class="plan-block"><div class="plan-label">Ventaja competitiva</div><div class="plan-val">${explot.ventaja_competitiva || ''}</div></div>
+        <div class="plan-block"><div class="plan-label">Modelo de ingresos</div><div class="plan-val">${explot.modelo_ingresos || ''}</div></div>
+        ${pasosHTML ? `
+        <div class="plan-block">
+          <div class="plan-label">Pasos de implementación</div>
+          <table class="plan-table">
+            <thead><tr><th>#</th><th>Acción</th><th>Plazo</th><th>Recursos</th></tr></thead>
+            <tbody>${pasosHTML}</tbody>
+          </table>
+        </div>` : ''}
+        ${riesgosHTML ? `
+        <div class="plan-block">
+          <div class="plan-label">Gestión de riesgos</div>
+          <table class="plan-table">
+            <thead><tr><th>Riesgo identificado</th><th>Probabilidad</th><th>Estrategia de mitigación</th></tr></thead>
+            <tbody>${riesgosHTML}</tbody>
+          </table>
+        </div>` : ''}
+        ${(explot.alianzas_recomendadas || []).length ? `
+        <div class="plan-block">
+          <div class="plan-label">Alianzas estratégicas recomendadas</div>
+          <div class="tag-list">${(explot.alianzas_recomendadas || []).map(a => `<span class="ptag">${a}</span>`).join('')}</div>
+        </div>` : ''}
+      </div>` : ''}
+
+      <!-- RECOMENDACIONES -->
+      <div class="plan-sec">
+        <div class="plan-sec-title">⭐ Recomendaciones estratégicas PLYNN</div>
+        ${(p.recomendaciones || []).map(r => `
+          <div class="recom-item">
+            <div class="recom-num">${r.numero}</div>
+            <div class="recom-text"><strong>${r.titulo}</strong><br/>${r.descripcion}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- PRÓXIMOS PASOS -->
+      ${(p.proximos_pasos_inmediatos || []).length ? `
+      <div class="plan-sec">
+        <div class="plan-sec-title">🏁 Próximos pasos inmediatos</div>
+        ${(p.proximos_pasos_inmediatos || []).map((paso,i) => `
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">
+            <span style="background:var(--cyan);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${i+1}</span>
+            <span style="font-size:14px;padding-top:2px;">${paso}</span>
+          </div>`).join('')}
+      </div>` : ''}
+
+      <div class="plan-actions">
+        <button class="btn-pdf" id="btn-word-download" onclick="downloadWord()">📄 Descargar en Word (.docx)</button>
+        <button class="btn-pdf" style="background:var(--azul-m);" onclick="window.print()">🖨️ Guardar como PDF</button>
+        <button class="btn-new" onclick="location.reload()">🔄 Crear nuevo plan</button>
+      </div>
+    </div>`;
+
+  msgs.appendChild(wrap);
+  scrollDown();
+}
+
+function renderFallback(raw) {
+  const msgs = document.getElementById('messages');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = `<div class="avatar">✦</div><div class="bubble">
+    ✅ <strong>Información recopilada.</strong> El plan fue generado pero hubo un problema al formatear. Aquí el contenido en bruto:<br/><br/>
+    <div style="background:var(--gris-f);padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;max-height:300px;overflow:auto;">${raw || 'Sin contenido'}</div>
+    <div class="chips"><button class="chip" onclick="location.reload()">🔄 Reiniciar</button></div>
+  </div>`;
+  msgs.appendChild(el);
+  scrollDown();
+}
+
+// ---- UI HELPERS ----
+function showBot(html, btns) {
+  removeTyping();
+  const msgs = document.getElementById('messages');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+
+  let btnsHTML = '';
+  if (btns) {
+    btnsHTML = '<div class="chips">' +
+      btns.map(b => b.action
+        ? `<button class="chip" onclick="${b.action}()">${b.label}</button>`
+        : `<button class="chip">${b.label}</button>`
+      ).join('') + '</div>';
+  }
+
+  el.innerHTML = `<div class="avatar">✦</div><div class="bubble">${html}${btnsHTML}</div>`;
+  msgs.appendChild(el);
+  scrollDown();
+}
+
+function showUser(text) {
+  const msgs = document.getElementById('messages');
+  const el   = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="avatar">Tú</div><div class="bubble">${escHtml(text)}</div>`;
+  msgs.appendChild(el);
+  scrollDown();
+}
+
+function showTyping() {
+  removeTyping();
+  const msgs = document.getElementById('messages');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+  el.id = 'typing-indicator';
+  el.innerHTML = `<div class="avatar">✦</div><div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(el);
+  scrollDown();
+}
+
+function removeTyping() {
+  document.getElementById('typing-indicator')?.remove();
+}
+
+function lockInput() {
+  document.getElementById('input').disabled   = true;
+  document.getElementById('btn-send').disabled = true;
+}
+
+function unlockInput() {
+  const inp = document.getElementById('input');
+  inp.disabled = false;
+  document.getElementById('btn-send').disabled = false;
+  inp.focus();
+}
+
+function scrollDown() {
+  setTimeout(() => window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'}), 120);
+}
+
+function formatMsg(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,     '<em>$1</em>')
+    .replace(/\n\n/g, '<br/><br/>')
+    .replace(/\n/g,   '<br/>');
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ================================================================
+// GENERAR WORD (.docx)
+// ================================================================
+function downloadWord() {
+  if (!lastPlanData) { alert('Primero genera el plan'); return; }
+  const p   = lastPlanData;
+  const btn = document.getElementById('btn-word-download');
+  btn.textContent = '⏳ Generando Word...';
+  btn.disabled = true;
+
+  try {
+    const {
+      Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+      HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
+      VerticalAlign, LevelFormat, PageBreak
+    } = docx;
+
+    const AZUL    = "1A3365";
+    const CYAN    = "0FBAE3";
+    const AMARILLO = "FFBB00";
+    const GRISF   = "F4F6FA";
+    const border  = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+    const borders = { top: border, bottom: border, left: border, right: border };
+    const noBorder  = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+    const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+    const TW = 9360;
+
+    function h1(text) {
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun({ text, bold: true, color: AZUL, size: 28, font: "Montserrat" })],
+        spacing: { before: 360, after: 120 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: CYAN, space: 4 } }
+      });
+    }
+    function h2(text) {
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        children: [new TextRun({ text, bold: true, color: AZUL, size: 24, font: "Montserrat" })],
+        spacing: { before: 240, after: 80 }
+      });
+    }
+    function label(text) {
+      return new Paragraph({
+        children: [new TextRun({ text: text.toUpperCase(), bold: true, color: "61809F", size: 18, font: "Montserrat" })],
+        spacing: { before: 160, after: 40 }
+      });
+    }
+    function body(text) {
+      return new Paragraph({
+        children: [new TextRun({ text: text || '—', size: 22, font: "Montserrat", color: "1E293B" })],
+        spacing: { before: 0, after: 80 }
+      });
+    }
+    function bullet(text) {
+      return new Paragraph({
+        numbering: { reference: "bullets", level: 0 },
+        children: [new TextRun({ text: text || '', size: 22, font: "Montserrat", color: "1E293B" })],
+        spacing: { before: 40, after: 40 }
+      });
+    }
+    function gap(sz) {
+      return new Paragraph({ children: [new TextRun("")], spacing: { before: sz || 80, after: 0 } });
+    }
+    function pageBreak() {
+      return new Paragraph({ children: [new PageBreak()] });
+    }
+    function makeTable(headers, rows, colWidths) {
+      const hRow = new TableRow({
+        tableHeader: true,
+        children: headers.map((h, i) => new TableCell({
+          borders,
+          shading: { fill: AZUL, type: ShadingType.CLEAR },
+          width: { size: colWidths[i], type: WidthType.DXA },
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: [new Paragraph({
+            children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 18, font: "Montserrat" })]
+          })]
+        }))
+      });
+      const dataRows = rows.map((row, ri) => new TableRow({
+        children: row.map((cell, ci) => new TableCell({
+          borders,
+          shading: { fill: ri % 2 === 0 ? "FFFFFF" : GRISF, type: ShadingType.CLEAR },
+          width: { size: colWidths[ci], type: WidthType.DXA },
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: [new Paragraph({
+            children: [new TextRun({ text: String(cell || '—'), size: 20, font: "Montserrat" })]
+          })]
+        }))
+      }));
+      return new Table({
+        width: { size: TW, type: WidthType.DXA },
+        columnWidths: colWidths,
+        rows: [hRow, ...dataRows]
+      });
+    }
+
+    const children = [];
+    const df = p.plan_difusion;
+    const ex = p.plan_explotacion;
+
+    // PORTADA
+    children.push(
+      gap(800),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PLYNN · INNOVACIÓN", bold: true, color: CYAN, size: 28, font: "Montserrat" })] }),
+      gap(40),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "PLAN DE DIFUSIÓN Y EXPLOTACIÓN", bold: true, color: AZUL, size: 40, font: "Montserrat" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "DE RESULTADOS DE I+D+i", bold: true, color: AZUL, size: 40, font: "Montserrat" })] }),
+      gap(120),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: p.empresa || '', bold: true, color: "1E293B", size: 30, font: "Montserrat" })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: p.proyecto || '', size: 24, color: "61809F", font: "Montserrat" })] }),
+      gap(80),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: (p.sector || '') + " · " + (p.fecha || ''), size: 20, color: "94A3B8", font: "Montserrat" })] }),
+      gap(200),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Generado con metodología PLYNN", size: 18, italics: true, color: "94A3B8", font: "Montserrat" })] }),
+      pageBreak()
+    );
+
+    // RESUMEN EJECUTIVO
+    children.push(h1("1. Resumen Ejecutivo"), body(p.resumen_ejecutivo || ''), gap());
+
+    // PROPIEDAD INTELECTUAL
+    children.push(h1("2. Propiedad Intelectual"));
+    if (p.pi?.advertencia) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: "⚠️ ADVERTENCIA: " + p.pi.advertencia, bold: true, color: "C0392B", size: 22, font: "Montserrat" })],
+        shading: { fill: "FFF3F3", type: ShadingType.CLEAR },
+        spacing: { before: 80, after: 120 }
+      }));
+    }
+    children.push(label("Tipo de protección"), body(p.pi?.proteccion));
+    children.push(label("Detalle y alcance"),   body(p.pi?.tipo_detalle));
+    children.push(label("Estado actual"),        body(p.pi?.estado));
+    children.push(label("Recomendación PLYNN"),  new Paragraph({
+      children: [new TextRun({ text: p.pi?.recomendacion || '—', bold: true, color: AZUL, size: 22, font: "Montserrat" })],
+      spacing: { before: 0, after: 80 }
+    }));
+    children.push(gap());
+
+    // PLAN DE DIFUSIÓN
+    if (df?.aplica) {
+      children.push(pageBreak(), h1("3. Plan de Difusión"));
+      if (df.advertencia_pi) children.push(new Paragraph({
+        children: [new TextRun({ text: "⚠️ " + df.advertencia_pi, bold: true, color: "C0392B", size: 22, font: "Montserrat" })],
+        spacing: { before: 80, after: 120 }
+      }));
+      children.push(label("Justificación"),             body(df.justificacion));
+      children.push(label("Reto que soluciona"),         body(df.reto_que_soluciona));
+      children.push(label("Impacto esperado"),           body(df.impacto));
+      children.push(label("Diferenciación vs competencia"), body(df.diferenciacion));
+      children.push(label("Mensaje clave"), new Paragraph({
+        children: [new TextRun({ text: '"' + (df.mensaje_clave || '') + '"', bold: true, color: AZUL, size: 24, italics: true, font: "Montserrat" })],
+        spacing: { before: 0, after: 120 }
+      }));
+
+      children.push(h2("3.1 Públicos Objetivo"));
+      (df.publico_objetivo || []).forEach(pub => {
+        children.push(new Paragraph({ children: [new TextRun({ text: pub.segmento, bold: true, size: 22, font: "Montserrat", color: AZUL })] }));
+        children.push(body(pub.descripcion));
+      });
+
+      if ((df.canales || []).length) {
+        children.push(h2("3.2 Canales y Acciones"), gap(40));
+        const canRows = (df.canales || []).map(c => [c.canal, (c.acciones || []).join(' / '), c.frecuencia || '—', c.costo_estimado || '—']);
+        children.push(makeTable(['Canal','Acciones concretas','Frecuencia','Costo'], canRows, [2200,4200,1600,1360]));
+        children.push(gap());
+      }
+
+      if ((df.cronograma || []).length) {
+        children.push(h2("3.3 Cronograma de Difusión"), gap(40));
+        const cronoRows = (df.cronograma || []).map(c => [c.fase, c.meses, (c.actividades || []).join(' / '), c.responsable || '—']);
+        children.push(makeTable(['Fase','Período','Actividades','Responsable'], cronoRows, [2400,1360,3960,1640]));
+        children.push(gap());
+      }
+
+      if ((df.indicadores || []).length) {
+        children.push(h2("3.4 Indicadores de Éxito (KPIs)"), gap(40));
+        const kpiRows = (df.indicadores || []).map(i => [i.indicador, i.meta, i.como_medir]);
+        children.push(makeTable(['Indicador','Meta','Cómo medir'], kpiRows, [3120,3120,3120]));
+        children.push(gap());
+      }
+
+      children.push(label("Presupuesto estimado"), body(df.presupuesto));
+    }
+
+    // PLAN DE EXPLOTACIÓN
+    if (ex?.aplica) {
+      children.push(pageBreak(), h1("4. Plan de Explotación"));
+      children.push(label("Forma de explotación elegida"), new Paragraph({
+        children: [new TextRun({ text: ex.forma_elegida || '—', bold: true, color: AZUL, size: 26, font: "Montserrat" })],
+        spacing: { before: 0, after: 80 }
+      }));
+      children.push(label("Justificación de la forma elegida"), body(ex.descripcion_forma));
+      children.push(label("Mercado objetivo"),    body(ex.mercado?.descripcion));
+      children.push(label("Cobertura geográfica"), body(ex.mercado?.cobertura));
+      if ((ex.mercado?.segmentos_clave || []).length) {
+        children.push(label("Segmentos clave"));
+        (ex.mercado.segmentos_clave || []).forEach(s => children.push(bullet(s)));
+      }
+      children.push(label("Ventaja competitiva"), body(ex.ventaja_competitiva));
+      children.push(label("Modelo de ingresos"),  body(ex.modelo_ingresos));
+
+      if ((ex.pasos_implementacion || []).length) {
+        children.push(h2("4.1 Pasos de Implementación"), gap(40));
+        const pasRows = (ex.pasos_implementacion || []).map(s => [s.paso, s.accion, s.plazo, s.recursos]);
+        children.push(makeTable(['#','Acción','Plazo','Recursos'], pasRows, [500,4200,1960,2700]));
+        children.push(gap());
+      }
+
+      if ((ex.riesgos || []).length) {
+        children.push(h2("4.2 Gestión de Riesgos"), gap(40));
+        const riskRows = (ex.riesgos || []).map(r => [r.riesgo, r.probabilidad, r.mitigacion]);
+        children.push(makeTable(['Riesgo identificado','Probabilidad','Estrategia de mitigación'], riskRows, [3600,1560,4200]));
+        children.push(gap());
+      }
+
+      if ((ex.alianzas_recomendadas || []).length) {
+        children.push(label("Alianzas estratégicas recomendadas"));
+        (ex.alianzas_recomendadas || []).forEach(a => children.push(bullet(a)));
+      }
+    }
+
+    // RECOMENDACIONES
+    children.push(pageBreak(), h1("5. Recomendaciones Estratégicas PLYNN"));
+    (p.recomendaciones || []).forEach(r => {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: r.numero + ". " + r.titulo, bold: true, color: AZUL, size: 24, font: "Montserrat" })],
+        spacing: { before: 160, after: 40 }
+      }));
+      children.push(body(r.descripcion));
+    });
+
+    // PRÓXIMOS PASOS
+    if ((p.proximos_pasos_inmediatos || []).length) {
+      children.push(gap(120), h1("6. Próximos Pasos Inmediatos"));
+      (p.proximos_pasos_inmediatos || []).forEach(paso => {
+        children.push(new Paragraph({
+          numbering: { reference: "numbers", level: 0 },
+          children: [new TextRun({ text: paso, size: 22, font: "Montserrat" })],
+          spacing: { before: 60, after: 60 }
+        }));
+      });
+    }
+
+    // PIE
+    children.push(gap(200), new Paragraph({
+      alignment: AlignmentType.CENTER,
+      border: { top: { style: BorderStyle.SINGLE, size: 4, color: CYAN, space: 4 } },
+      children: [new TextRun({ text: "Documento generado con el Asistente PLYNN de Innovación · plynn.co", size: 18, italics: true, color: "94A3B8", font: "Montserrat" })],
+      spacing: { before: 160, after: 0 }
+    }));
+
+    // BUILD DOC
+    const doc = new Document({
+      numbering: {
+        config: [
+          { reference: "bullets", levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] },
+          { reference: "numbers", levels: [{ level: 0, format: LevelFormat.DECIMAL, text: "%1.", alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 720, hanging: 360 } } } }] }
+        ]
+      },
+      styles: {
+        default: { document: { run: { font: "Montserrat", size: 22 } } },
+        paragraphStyles: [
+          { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
+            run: { size: 28, bold: true, font: "Montserrat", color: AZUL },
+            paragraph: { spacing: { before: 360, after: 120 }, outlineLevel: 0 } },
+          { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
+            run: { size: 24, bold: true, font: "Montserrat", color: AZUL },
+            paragraph: { spacing: { before: 240, after: 80 }, outlineLevel: 1 } }
+        ]
+      },
+      sections: [{
+        properties: {
+          page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
+        },
+        children
+      }]
+    });
+
+    Packer.toBlob(doc).then(blob => {
+      const fname = (p.empresa || 'PLYNN').replace(/[^a-zA-Z0-9]/g, '-') + '_Plan_IDi.docx';
+      saveAs(blob, fname);
+      btn.textContent = '✅ ¡Descargado!';
+      setTimeout(() => { btn.textContent = '📄 Descargar en Word (.docx)'; btn.disabled = false; }, 3000);
+    });
+
+  } catch(err) {
+    console.error('Error generando Word:', err);
+    btn.textContent = '❌ Error — intenta de nuevo';
+    btn.disabled = false;
+    alert('Error al generar el Word: ' + err.message);
+  }
+}
+</script>
+</body>
+</html>
