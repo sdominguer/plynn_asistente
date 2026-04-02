@@ -519,18 +519,22 @@ async function generatePlan() {
   ];
 
   try {
+    const contents = planMessages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
+
     const res = await fetch(API, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1000,
-        system: 'Eres un experto en I+D+i para PYMEs. Genera ÚNICAMENTE JSON válido, sin texto adicional, sin bloques markdown. El JSON debe ser completo y detallado.',
-        messages: planMessages
+        system_instruction: { parts: [{ text: 'Eres un experto en I+D+i para PYMEs. Genera ÚNICAMENTE JSON válido, sin texto adicional, sin bloques markdown. El JSON debe ser completo y detallado.' }] },
+        contents
       })
     });
+
     const data  = await res.json();
-    const raw   = data.content?.find(b => b.type === 'text')?.text || '';
+    const raw   = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const clean = raw.replace(/```json|```/g, '').trim();
 
     let plan;
