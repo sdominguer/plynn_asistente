@@ -449,18 +449,22 @@ async function callClaude() {
   showTyping();
 
   try {
+    const contents = history.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
+
     const res = await fetch(API, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1000,
-        system: SYSTEM,
-        messages: history
+        system_instruction: { parts: [{ text: SYSTEM }] },
+        contents
       })
     });
+
     const data = await res.json();
-    const raw  = data.content?.find(b => b.type === 'text')?.text || '';
+    const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     removeTyping();
 
     const faseMatch = raw.match(/\[FASE:(\d)\]/);
