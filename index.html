@@ -450,10 +450,11 @@ async function callClaude() {
   showTyping();
 
   try {
-    const contents = history.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
+  const recentHistory = history.slice(-6);
+      const contents = recentHistory.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
 
     const res = await fetch(API, {
       method: 'POST',
